@@ -1,0 +1,49 @@
+--create the table
+CREATE TABLE os_address.codepoint (
+	Postcode VARCHAR(7),
+	Positional_quality_indicator SMALLINT,
+	PO_Box_indicator VARCHAR(1),
+	Total_number_of_delivery_points SMALLINT,
+	Delivery_points_used_to_create_the_CPLC SMALLINT,
+	Domestic_delivery_points SMALLINT,
+	Non_domestic_delivery_points SMALLINT,
+	PO_Box_delivery_points SMALLINT,
+	Matched_address_premises SMALLINT,
+	Unmatched_delivery_points SMALLINT,
+	Eastings BIGINT,
+	Northings BIGINT,
+	Country_code VARCHAR(9),
+	NHS_regional_HA_code VARCHAR(9),
+	NHS_HA_code VARCHAR(9),
+	Admin_county_code VARCHAR(9),
+	Admin_district_code VARCHAR(9),
+	Admin_ward_code VARCHAR(9),
+	Postcode_type VARCHAR(1)
+	);
+
+--Load the data
+copy os_address.codepoint(postcode, positional_quality_indicator, po_box_indicator, total_number_of_delivery_points, delivery_points_used_to_create_the_cplc, domestic_delivery_points, non_domestic_delivery_points, po_box_delivery_points, matched_address_premises, unmatched_delivery_points, eastings, northings, country_code, nhs_regional_ha_code, nhs_ha_code, admin_county_code, admin_district_code, admin_ward_code, postcode_type)
+FROM 'C:\OS\Boundaries\20190304 codepp_essh_gb\codepoint_with_header.csv' delimiter ',' quote '"' ESCAPE '"' csv HEADER;;
+
+--Add a geometry column
+ALTER TABLE os_address.codepoint ADD COLUMN geom geometry (
+	Point,
+	4258
+	);
+
+--UPdate GB which uses OSGB 1936 (27700)
+UPDATE os_address.codepoint
+SET geom = ST_SetSRID(ST_SetSRID(ST_MakePoint(eastings, northings), 27700), 4258)
+WHERE Left(country_code, 1) <> 'N'
+	AND eastings <> 0
+	AND northings <> 0;
+
+--UPdate Northern Irish which uses Irish Transverse Mercator Grid
+UPDATE os_address.codepoint
+SET geom = ST_SetSRID(ST_SetSRID(ST_MakePoint(eastings, northings), 2157), 4258)
+WHERE Left(country_code, 1) = 'N'
+	AND eastings <> 0
+	AND northings <> 0;
+
+--Create spatial index to improve loading\querying times
+CREATE INDEX codepoint_geom_indx ON os_address.codepoint USING gist (geom);
