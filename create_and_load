@@ -38,7 +38,7 @@ WHERE Left(country_code, 1)<>'N' AND eastings <> 0 AND northings <> 0;
 
 --UPdate Northern Irish which uses Irish Transverse Mercator Grid
 UPDATE os_address.codepoint
-SET geom = ST_Transform(ST_SetSRID(ST_MakePoint(eastings, northings),2157), 4258)
+SET geom = ST_Transform(ST_SetSRID(ST_MakePoint(eastings, northings),29901), 4258)
 WHERE Left(country_code, 1)= 'N' AND eastings <> 0 AND northings <> 0;
 
 --Create spatial index to improve loading\querying times
