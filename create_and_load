@@ -28,17 +28,17 @@ FROM 'C:\OS\Boundaries\20190304 codepp_essh_gb\codepoint_with_header.csv' delimi
 --Add a geometry column
 ALTER TABLE os_address.codepoint ADD COLUMN geom geometry (
 	Point,
-	4258
+	4326
 	);
 
 --UPdate GB which uses OSGB 1936 (27700)
 UPDATE os_address.codepoint
-SET geom = ST_Transform(ST_SetSRID(ST_MakePoint(eastings, northings),27700), 4258)
+SET geom = ST_Transform(ST_SetSRID(ST_MakePoint(eastings, northings),27700), 4326)
 WHERE Left(country_code, 1)<>'N' AND eastings <> 0 AND northings <> 0;
 
 --UPdate Northern Irish which uses Irish Transverse Mercator Grid
 UPDATE os_address.codepoint
-SET geom = ST_Transform(ST_SetSRID(ST_MakePoint(eastings, northings),29901), 4258)
+SET geom = ST_Transform(ST_SetSRID(ST_MakePoint(eastings, northings),29901), 4326)
 WHERE Left(country_code, 1)= 'N' AND eastings <> 0 AND northings <> 0;
 
 --Create spatial index to improve loading\querying times
